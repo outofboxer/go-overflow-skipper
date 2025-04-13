@@ -14,13 +14,38 @@ type Throttle[T any] struct {
 	skipMessageCallback func(skippedMsgCount uint64)
 	messageProducer     func(ctx context.Context) (T, error)
 	lastBufferFill      time.Time
+	bufferCapacity      int
 }
 
-func NewThrottle[T any](bufferCapacity int, bucketDuration time.Duration) *Throttle[T] {
-	return &Throttle[T]{
-		queue:          make(chan T, bufferCapacity), // up to 'bufferCapacity' pending messages
-		bucketDuration: bucketDuration,
+type Option[T any] func(*Throttle[T])
+
+func WithBufferCapacity[T any](capacity int) Option[T] {
+	return func(t *Throttle[T]) {
+		t.bufferCapacity = &capacity
 	}
+}
+
+func WithBucketDuration[T any](duration time.Duration) Option[T] {
+	return func(t *Throttle[T]) {
+		t.bucketDuration = duration
+	}
+}
+
+// bufferCapacity int, bucketDuration time.Duration
+func NewThrottle[T any](opts ...Option[T]) *Throttle[T] {
+	t := &Throttle[T]{
+		//queue:          make(chan T, bufferCapacity), // up to 'bufferCapacity' pending messages
+		bufferCapacity: 100,         // default buffer capacity
+		bucketDuration: time.Second, // default duration
+	}
+
+	for _, opt := range opts {
+		opt(t)
+	}
+
+	t.queue = make(chan T, t.bufferCapacity)
+
+	return t
 }
 
 func (t *Throttle[T]) Run(ctx context.Context) error {

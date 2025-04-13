@@ -16,18 +16,27 @@ type Message struct {
 func TestNewThrottle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	throttler := NewThrottle[Message](10, time.Second)
+
+	//throttle := NewIntThrottle(
+	//	WithBufferCapacity ,
+	//	WithBucketDuration[int](time.Second),
+	//)
+
+	throttler := NewThrottle[int](
+		WithBufferCapacity(10),
+		WithBucketDuration(2*time.Second),
+	)
 
 	throttler.messageHandler = func(msg Message) {
 		fmt.Printf("got in handler: %+v\n", msg)
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 100) // consumer has more sleep time than messageProducer.
 	}
 	throttler.skipMessageCallback = func(skippedMsgCount uint64) {
 		fmt.Printf("skippedMsgCount: %d\n", skippedMsgCount)
 	}
 
 	throttler.messageProducer = func(ctx context.Context) (Message, error) {
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 50) // producer awaken more frequently than messageHandler.
 		return Message{
 			ID:      "1",
 			Message: "hello world",
