@@ -17,14 +17,9 @@ func TestNewThrottle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	//throttle := NewIntThrottle(
-	//	WithBufferCapacity ,
-	//	WithBucketDuration[int](time.Second),
-	//)
-
-	throttler := NewThrottle[int](
-		WithBufferCapacity(10),
-		WithBucketDuration(2*time.Second),
+	throttler := NewThrottle[Message](
+		WithBufferCapacity[Message](10),
+		WithBucketDuration[Message](2*time.Second),
 	)
 
 	throttler.messageHandler = func(msg Message) {

@@ -21,7 +21,7 @@ type Option[T any] func(*Throttle[T])
 
 func WithBufferCapacity[T any](capacity int) Option[T] {
 	return func(t *Throttle[T]) {
-		t.bufferCapacity = &capacity
+		t.bufferCapacity = capacity
 	}
 }
 
